@@ -60,7 +60,7 @@
         }
       }
 
-      transcription.innerHTML += bestGuess + '&nbsp;';
+      transcription.innerHTML += ' ' + bestGuess;
     });
   }
 
