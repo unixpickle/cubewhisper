@@ -128,10 +128,10 @@
   };
 
   WordStream.prototype._terminateWord = function() {
-    // TODO: here, process the word and emit a "signature vector" for it.
+    var signature = new window.app.WordSignature(this._previousFFTs);
     this._previousFFTs = [];
     this._previousAmplitudes = [];
-    this.emit('word', null);
+    this.emit('word', signature);
   };
 
   window.app.WordStream = WordStream;

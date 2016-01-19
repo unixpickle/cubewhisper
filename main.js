@@ -9,8 +9,13 @@ window.addEventListener('load', function() {
   el.innerText = '0 words';
   var wordCount = 0;
   document.body.appendChild(el);
-  stream.on('word', function() {
+  var lastSignature = null;
+  stream.on('word', function(sig) {
     ++wordCount;
     el.innerText = wordCount + ' word' + (wordCount === 1 ? '' : 's');
+    if (lastSignature !== null) {
+      el.innerText += ' difference from last: ' + sig.difference(lastSignature);
+    }
+    lastSignature = sig;
   });
 });
