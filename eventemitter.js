@@ -43,7 +43,7 @@
   EventEmitter.prototype.once = function(name, listener) {
     var f;
     f = function() {
-      listener();
+      listener.apply(this, arguments);
       this.removeListener(name, f);
     }.bind(this);
     this.addListener(name, f);
