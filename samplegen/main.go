@@ -17,7 +17,7 @@ var (
 )
 
 const (
-	MinLen = 10
+	MinLen = 1
 	MaxLen = 30
 )
 
@@ -35,7 +35,7 @@ func main() {
 	fmt.Println("[")
 	for i := 0; i < count; i++ {
 		fmt.Printf("  {\"Label\": \"%s\", \"File\":\"\", \"ID\": \"%s\"},\n",
-			generateScramble(rand.Intn(1+MaxLen-MinLen+MinLen)),
+			generateScramble(MinLen+rand.Intn(1+MaxLen-MinLen)),
 			randomID())
 	}
 	fmt.Println("]")
