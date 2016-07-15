@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	FeatureCount = 26
-	HiddenSize   = 100
-	BatchSize    = 100
+	FeatureCount  = 26
+	HiddenSize    = 100
+	BatchSize     = 100
+	CostBatchSize = 20
 )
 
 func Train(rnnFile, sampleDir string, stepSize float64) {
@@ -43,12 +44,15 @@ func Train(rnnFile, sampleDir string, stepSize float64) {
 	log.Println("Training with", samples.Len(), "samples...")
 
 	gradienter := &ctc.RGradienter{
-		Learner: seqFunc,
-		SeqFunc: seqFunc,
+		Learner:        seqFunc,
+		SeqFunc:        seqFunc,
+		MaxConcurrency: 2,
 	}
+	var epoch int
 	sgd.SGDInteractive(gradienter, samples, stepSize, BatchSize, func() bool {
-		// TODO: print cost here.
-		log.Println("iteration.")
+		cost := ctc.TotalCost(seqFunc, samples, CostBatchSize, 0)
+		log.Printf("Epoch %d: cost=%e", epoch, cost)
+		epoch++
 		return true
 	})
 

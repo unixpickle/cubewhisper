@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +17,8 @@ import (
 const (
 	AudioWindowTime    = time.Millisecond * 20
 	AudioWindowOverlap = time.Millisecond * 10
+
+	NoiseAmount = 1e-5
 )
 
 type Label int
@@ -115,7 +118,8 @@ func readAudioFile(file string) ([]linalg.Vector, error) {
 	var audioData []float64
 	for i, x := range wavFile.Samples() {
 		if i%wavFile.Channels() == 0 {
-			audioData = append(audioData, float64(x))
+			sample := float64(x) + rand.NormFloat64()*NoiseAmount
+			audioData = append(audioData, sample)
 		}
 	}
 
