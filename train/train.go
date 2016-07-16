@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 
 	"github.com/unixpickle/num-analysis/linalg"
@@ -24,6 +25,8 @@ const (
 	MaxConcurrency = 2
 
 	CrossRatio = 0.3
+
+	WeightStddev = 0.01
 )
 
 func Train(rnnFile, sampleDir string, stepSize float64) {
@@ -133,6 +136,15 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 	backwardBlock := rnn.StackedBlock{
 		netBlock,
 		rnn.NewLSTM(FeatureCount, HiddenSize),
+	}
+	for _, block := range []rnn.StackedBlock{forwardBlock, backwardBlock} {
+		for i, param := range block.Parameters() {
+			if i%2 == 0 {
+				for i := range param.Vector {
+					param.Vector[i] = rand.NormFloat64() * WeightStddev
+				}
+			}
+		}
 	}
 	return &rnn.Bidirectional{
 		Forward:  &rnn.RNNSeqFunc{Block: forwardBlock},
