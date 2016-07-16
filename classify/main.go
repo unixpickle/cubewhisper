@@ -37,7 +37,11 @@ func main() {
 	res := seqFunc.BatchSeqs([][]autofunc.Result{inSeq})
 
 	classification := ctc.BestPath(res.OutputSeqs()[0])
-	fmt.Println(classification)
+	labels := make([]cubewhisper.Label, len(classification))
+	for i, c := range classification {
+		labels[i] = cubewhisper.Label(c)
+	}
+	fmt.Println(cubewhisper.LabelsToMoveString(labels))
 }
 
 func die(err error) {

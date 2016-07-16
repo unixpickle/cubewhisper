@@ -68,3 +68,41 @@ func LabelsForMoveString(algorithm string) []Label {
 	}
 	return label
 }
+
+// LabelsToMoveString turns a sequence of Labels into
+// a string in Rubik's cube notation.
+func LabelsToMoveString(l []Label) string {
+	var parts []string
+	var wide bool
+	for _, label := range l {
+		if label == Wide {
+			wide = true
+			continue
+		}
+		switch label {
+		case EMove, MMove, SMove, XMove, YMove, ZMove:
+			moveMap := map[Label]string{EMove: "E", MMove: "M", SMove: "S",
+				XMove: "x", YMove: "y", ZMove: "z"}
+			parts = append(parts, moveMap[label])
+		case Prime, Squared:
+			suffix := "'"
+			if label == Squared {
+				suffix = "2"
+			}
+			if len(parts) > 0 {
+				p := parts[len(parts)-1]
+				parts[len(parts)-1] = p + suffix
+			}
+		default:
+			letters := map[Label]string{RMove: "R", LMove: "L", DMove: "D",
+				FMove: "F", UMove: "U", BMove: "B"}
+			letter := letters[label]
+			if wide {
+				letter = strings.ToLower(letter)
+			}
+			parts = append(parts, letter)
+		}
+		wide = false
+	}
+	return strings.Join(parts, " ")
+}
