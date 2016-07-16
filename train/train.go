@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 
+	"github.com/unixpickle/cubewhisper"
 	"github.com/unixpickle/num-analysis/linalg"
 	"github.com/unixpickle/sgd"
 	"github.com/unixpickle/speechrecog/ctc"
@@ -116,7 +117,7 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 	outputNet := neuralnet.Network{
 		&neuralnet.DenseLayer{
 			InputCount:  HiddenSize * 2,
-			OutputCount: len(Labels) + 1,
+			OutputCount: len(cubewhisper.Labels) + 1,
 		},
 		&neuralnet.LogSoftmaxLayer{},
 	}
