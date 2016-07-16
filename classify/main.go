@@ -28,10 +28,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: handle errors.
-	rnnData, _ := ioutil.ReadFile(os.Args[1])
-	seqFunc, _ := rnn.DeserializeBidirectional(rnnData)
-	sample, _ := readAudioFile(os.Args[2])
+	rnnData, err := ioutil.ReadFile(os.Args[1])
+	if err != nil {
+		die(err)
+	}
+	seqFunc, err := rnn.DeserializeBidirectional(rnnData)
+	if err != nil {
+		die(err)
+	}
+	sample, err := readAudioFile(os.Args[2])
+	if err != nil {
+		die(err)
+	}
 
 	inSeq := make([]autofunc.Result, len(sample))
 	for i, x := range sample {
@@ -41,6 +49,11 @@ func main() {
 
 	classification := ctc.BestPath(res.OutputSeqs()[0])
 	fmt.Println(classification)
+}
+
+func die(err error) {
+	fmt.Fprintln(os.Stderr, err)
+	os.Exit(1)
 }
 
 func readAudioFile(file string) ([]linalg.Vector, error) {
