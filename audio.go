@@ -27,14 +27,24 @@ func ReadAudioFile(file string) ([]linalg.Vector, error) {
 	var audioData []float64
 	for i, x := range wavFile.Samples() {
 		if i%wavFile.Channels() == 0 {
-			// Add random noise to avoid zero-power chunks
-			// of signal which cause -Infs in the MFCCs.
-			sample := float64(x) + rand.NormFloat64()*noiseAmount
-			audioData = append(audioData, sample)
+			audioData = append(audioData, float64(x))
 		}
 	}
 
-	mfccSource := mfcc.MFCC(&mfcc.SliceSource{Slice: audioData}, wavFile.SampleRate(),
+	return SeqForAudioSamples(audioData, wavFile.SampleRate()), nil
+}
+
+// SeqForAudioSamples turns a raw buffer of mono audio
+// samples into an input sequence.
+func SeqForAudioSamples(slice []float64, sampleRate int) []linalg.Vector {
+	audioData := make([]float64, len(slice))
+	for i, x := range slice {
+		// Add random noise to avoid zero-power chunks
+		// of signal which cause -Infs in the MFCCs.
+		audioData[i] = x + rand.NormFloat64()*noiseAmount
+	}
+
+	mfccSource := mfcc.MFCC(&mfcc.SliceSource{Slice: audioData}, sampleRate,
 		&mfcc.Options{Window: audioWindowTime, Overlap: audioWindowOverlap})
 	mfccSource = mfcc.AddVelocities(mfccSource)
 
@@ -48,5 +58,5 @@ func ReadAudioFile(file string) ([]linalg.Vector, error) {
 		}
 	}
 
-	return coeffs, nil
+	return coeffs
 }
