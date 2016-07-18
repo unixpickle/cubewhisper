@@ -49,7 +49,7 @@ func LabelsForMoveString(algorithm string) []Label {
 				'R': RMove, 'U': UMove, 'L': LMove, 'D': DMove,
 				'F': FMove, 'B': BMove,
 			}
-			label = append(label, mapping[move[0]])
+			label = append(label, mapping[strings.ToUpper(move)[0]])
 		case 'E':
 			label = append(label, EMove)
 		case 'M':
