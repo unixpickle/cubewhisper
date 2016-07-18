@@ -41,7 +41,8 @@ func main() {
 	for i, c := range classification {
 		labels[i] = cubewhisper.Label(c)
 	}
-	fmt.Println(cubewhisper.LabelsToMoveString(labels))
+	fmt.Println("Raw labels:", labels)
+	fmt.Println("Algorithm:", cubewhisper.LabelsToMoveString(labels))
 }
 
 func die(err error) {
