@@ -18,7 +18,7 @@ import (
 
 const (
 	FeatureCount  = 26
-	HiddenSize    = 100
+	HiddenSize    = 200
 	BatchSize     = 20
 	CostBatchSize = 20
 
@@ -27,7 +27,9 @@ const (
 
 	CrossRatio = 0.3
 
-	WeightStddev = 0.01
+	WeightStddev  = 0.05
+	InputDropout  = 0.9
+	HiddenDropout = 0.5
 )
 
 func Train(rnnFile, sampleDir string, stepSize float64) {
@@ -60,20 +62,27 @@ func Train(rnnFile, sampleDir string, stepSize float64) {
 	validation := samples.Subset(0, crossLen)
 	training := samples.Subset(crossLen, samples.Len())
 
-	gradienter := &ctc.RGradienter{
-		Learner:        seqFunc,
-		SeqFunc:        seqFunc,
-		MaxConcurrency: MaxConcurrency,
-		MaxSubBatch:    MaxSubBatch,
+	gradienter := &sgd.Adam{
+		Gradienter: &ctc.RGradienter{
+			Learner:        seqFunc,
+			SeqFunc:        seqFunc,
+			MaxConcurrency: MaxConcurrency,
+			MaxSubBatch:    MaxSubBatch,
+		},
 	}
+
 	var epoch int
+	toggleDropout(seqFunc, true)
 	sgd.SGDInteractive(gradienter, training, stepSize, BatchSize, func() bool {
+		toggleDropout(seqFunc, false)
 		cost := ctc.TotalCost(seqFunc, training, CostBatchSize, 0)
 		crossCost := ctc.TotalCost(seqFunc, validation, CostBatchSize, 0)
+		toggleDropout(seqFunc, true)
 		log.Printf("Epoch %d: cost=%e cross=%e", epoch, cost, crossCost)
 		epoch++
 		return true
 	})
+	toggleDropout(seqFunc, false)
 
 	data, err := seqFunc.Serialize()
 	if err != nil {
@@ -115,6 +124,10 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 	}
 
 	outputNet := neuralnet.Network{
+		&neuralnet.DropoutLayer{
+			KeepProbability: HiddenDropout,
+			Training:        false,
+		},
 		&neuralnet.DenseLayer{
 			InputCount:  HiddenSize * 2,
 			OutputCount: len(cubewhisper.Labels) + 1,
@@ -128,15 +141,19 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 			Biases: means,
 			Scales: stddevs,
 		},
+		&neuralnet.DropoutLayer{
+			KeepProbability: InputDropout,
+			Training:        false,
+		},
 	}
 	netBlock := rnn.NewNetworkBlock(inputNet, 0)
 	forwardBlock := rnn.StackedBlock{
 		netBlock,
-		rnn.NewLSTM(FeatureCount, HiddenSize),
+		rnn.NewGRU(FeatureCount, HiddenSize),
 	}
 	backwardBlock := rnn.StackedBlock{
 		netBlock,
-		rnn.NewLSTM(FeatureCount, HiddenSize),
+		rnn.NewGRU(FeatureCount, HiddenSize),
 	}
 	for _, block := range []rnn.StackedBlock{forwardBlock, backwardBlock} {
 		for i, param := range block.Parameters() {
@@ -152,4 +169,12 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 		Backward: &rnn.RNNSeqFunc{Block: backwardBlock},
 		Output:   &rnn.NetworkSeqFunc{Network: outputNet},
 	}
+}
+
+func toggleDropout(bd *rnn.Bidirectional, dropout bool) {
+	output := bd.Output.(*rnn.NetworkSeqFunc).Network[0].(*neuralnet.DropoutLayer)
+	output.Training = dropout
+	inNet := bd.Forward.(*rnn.RNNSeqFunc).Block.(rnn.StackedBlock)[0].(*rnn.NetworkBlock)
+	inDropout := inNet.Network()[1].(*neuralnet.DropoutLayer)
+	inDropout.Training = dropout
 }
