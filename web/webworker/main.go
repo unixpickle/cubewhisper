@@ -10,7 +10,7 @@ import (
 	"github.com/unixpickle/weakai/rnn"
 )
 
-const SearchBlankCutoff = 1e-4
+const SearchBlankCutoff = -1e-4
 
 var Network rnn.SeqFunc
 var SampleRate int
