@@ -53,12 +53,16 @@ func initCommand(rnnData []byte) {
 }
 
 func classifySamples() {
+	emitLoading("Processing audio")
+
 	sample := cubewhisper.SeqForAudioSamples(Samples, SampleRate)
 
 	inSeq := make([]autofunc.Result, len(sample))
 	for i, x := range sample {
 		inSeq[i] = &autofunc.Variable{Vector: x}
 	}
+
+	emitLoading("Running neural network")
 
 	res := Network.BatchSeqs([][]autofunc.Result{inSeq})
 
@@ -68,10 +72,13 @@ func classifySamples() {
 		labels[i] = cubewhisper.Label(c)
 	}
 
-	emitMoves("Algorithms: " + cubewhisper.LabelsToMoveString(labels) +
-		" (Raw labels: " + fmt.Sprintf("%v", labels) + ")")
+	emitMoves(cubewhisper.LabelsToMoveString(labels), fmt.Sprintf("%v", labels))
 }
 
-func emitMoves(moves string) {
-	js.Global.Call("postMessage", moves)
+func emitLoading(status string) {
+	js.Global.Call("postMessage", map[string]string{"status": status})
+}
+
+func emitMoves(moves, raw string) {
+	js.Global.Call("postMessage", map[string]string{"moves": moves, "raw": raw})
 }

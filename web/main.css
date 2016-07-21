@@ -1,5 +1,37 @@
 body {
   text-align: center;
+  font-family: sans-serif;
+}
+
+#run-button {
+  margin-top: 10px;
+  background-color: #65bcd4;
+  color: white;
+  padding: 7px 20px;
+  font-size: 16px;
+  font-family: sans-serif;
+  font-weight: 300;
+  border: none;
+  box-sizing: border-box;
+}
+
+#run-button:hover {
+  cursor: pointer;
+  background-color: #3297b3;
+}
+
+#run-button:focus {
+  outline: 0;
+}
+
+#classification {
+  font-size: 15px;
+  display: inline-block;
+  margin-top: 15px;
+  background-color: #f0f0f0;
+  padding: 10px 20px;
+  border-radius: 3px;
+  box-sizing: border-box;
 }
 
 #training-status {
