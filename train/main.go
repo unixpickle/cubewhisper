@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-const DefaultStepSize = 1e-4
+const DefaultStepSize = 1e-3
 
 func main() {
 	if len(os.Args) != 3 && len(os.Args) != 4 {
