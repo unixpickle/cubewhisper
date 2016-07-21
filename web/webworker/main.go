@@ -10,6 +10,8 @@ import (
 	"github.com/unixpickle/weakai/rnn"
 )
 
+const SearchBlankCutoff = 1e-4
+
 var Network rnn.SeqFunc
 var SampleRate int
 var Samples []float64
@@ -66,7 +68,7 @@ func classifySamples() {
 
 	res := Network.BatchSeqs([][]autofunc.Result{inSeq})
 
-	classification := ctc.BestPath(res.OutputSeqs()[0])
+	classification := ctc.PrefixSearch(res.OutputSeqs()[0], SearchBlankCutoff)
 	labels := make([]cubewhisper.Label, len(classification))
 	for i, c := range classification {
 		labels[i] = cubewhisper.Label(c)
