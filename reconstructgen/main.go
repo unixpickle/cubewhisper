@@ -20,8 +20,9 @@ type ReconstructedSolve struct {
 }
 
 const (
-	MinLen = 1
-	MaxLen = 30
+	MinLen        = 1
+	MaxLen        = 30
+	MaxFieldCount = 15000
 )
 
 func main() {
@@ -48,17 +49,31 @@ func main() {
 		allFields = append(allFields, strings.Fields(rec)...)
 	}
 
-	fmt.Println("[")
-	for i := 0; i < len(allFields); i++ {
+	if len(allFields) > MaxFieldCount {
+		allFields = allFields[:MaxFieldCount]
+	}
+
+	fmt.Println("{\"Samples\": [")
+	var i int
+	for i < len(allFields) {
 		takeLen := rand.Intn(MaxLen-MinLen+1) + MinLen
 		if takeLen > len(allFields)-i {
 			takeLen = len(allFields) - i
 		}
 		label := strings.Join(allFields[i:i+takeLen], " ")
-		fmt.Printf("  {\"Label\": \"%s\", \"File\":\"\", \"ID\": \"%s\"},\n",
+		i += takeLen
+		if strings.Contains(label, "3") {
+			continue
+		}
+		fmt.Printf("  {\"Label\": \"%s\", \"File\":\"\", \"ID\": \"%s\"}",
 			label, randomID())
+		if i < len(allFields) {
+			fmt.Println(",")
+		} else {
+			fmt.Println("]")
+		}
 	}
-	fmt.Println("]")
+	fmt.Println("}")
 }
 
 func randomID() string {
