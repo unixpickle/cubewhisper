@@ -39,7 +39,11 @@
     window.EventEmitter.call(this);
     this._currentWorker = new Worker(WEBWORKER_FILE);
     this._currentWorker.onmessage = function(e) {
-      this.emit('moves', e.data);
+      if ('undefined' !== typeof e.data.status) {
+        this.emit('loading', e.data.status);
+      } else {
+        this.emit('moves', e.data.moves, e.data.raw);
+      }
     }.bind(this);
     this._currentWorker.postMessage(['init', rnnData]);
   }

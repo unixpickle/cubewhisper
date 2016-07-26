@@ -18,9 +18,12 @@
     stream.on('start', worker.start.bind(worker));
     stream.on('samples', worker.samples.bind(worker));
 
-    worker.on('moves', function(m) {
-      var label = document.getElementById('classification');
-      label.textContent = m;
+    var label = document.getElementById('classification');
+    worker.on('moves', function(moves, raw) {
+      label.innerHTML = 'Moves: <strong>' + moves + '</strong>';
+    });
+    worker.on('loading', function(status) {
+      label.innerHTML = status + '...';
     });
 
     var runButton = document.getElementById('run-button');

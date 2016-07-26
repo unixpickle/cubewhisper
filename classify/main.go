@@ -11,6 +11,8 @@ import (
 	"github.com/unixpickle/weakai/rnn"
 )
 
+const PrefixThreshold = -1e-4
+
 func main() {
 	if len(os.Args) != 3 {
 		fmt.Fprintln(os.Stderr, "Usage: classify <rnn> <sample.wav>")
@@ -36,7 +38,7 @@ func main() {
 	}
 	res := seqFunc.BatchSeqs([][]autofunc.Result{inSeq})
 
-	classification := ctc.BestPath(res.OutputSeqs()[0])
+	classification := ctc.PrefixSearch(res.OutputSeqs()[0], PrefixThreshold)
 	labels := make([]cubewhisper.Label, len(classification))
 	for i, c := range classification {
 		labels[i] = cubewhisper.Label(c)

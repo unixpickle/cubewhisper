@@ -1,3 +1,6 @@
+// Command samplegen generates random move sequences
+// suited for use with the recorder in
+// https://github.com/unixpickle/speechrecog.
 package main
 
 import (

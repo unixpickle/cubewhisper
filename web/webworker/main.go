@@ -10,6 +10,8 @@ import (
 	"github.com/unixpickle/weakai/rnn"
 )
 
+const SearchBlankCutoff = -1e-4
+
 var Network rnn.SeqFunc
 var SampleRate int
 var Samples []float64
@@ -53,6 +55,8 @@ func initCommand(rnnData []byte) {
 }
 
 func classifySamples() {
+	emitLoading("Processing audio")
+
 	sample := cubewhisper.SeqForAudioSamples(Samples, SampleRate)
 
 	inSeq := make([]autofunc.Result, len(sample))
@@ -60,18 +64,23 @@ func classifySamples() {
 		inSeq[i] = &autofunc.Variable{Vector: x}
 	}
 
+	emitLoading("Running neural network")
+
 	res := Network.BatchSeqs([][]autofunc.Result{inSeq})
 
-	classification := ctc.BestPath(res.OutputSeqs()[0])
+	classification := ctc.PrefixSearch(res.OutputSeqs()[0], SearchBlankCutoff)
 	labels := make([]cubewhisper.Label, len(classification))
 	for i, c := range classification {
 		labels[i] = cubewhisper.Label(c)
 	}
 
-	emitMoves("Algorithms: " + cubewhisper.LabelsToMoveString(labels) +
-		" (Raw labels: " + fmt.Sprintf("%v", labels) + ")")
+	emitMoves(cubewhisper.LabelsToMoveString(labels), fmt.Sprintf("%v", labels))
 }
 
-func emitMoves(moves string) {
-	js.Global.Call("postMessage", moves)
+func emitLoading(status string) {
+	js.Global.Call("postMessage", map[string]string{"status": status})
+}
+
+func emitMoves(moves, raw string) {
+	js.Global.Call("postMessage", map[string]string{"moves": moves, "raw": raw})
 }
