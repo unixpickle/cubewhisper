@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	audioWindowTime    = time.Millisecond * 20
-	audioWindowOverlap = time.Millisecond * 10
+	audioWindowTime    = time.Millisecond * 10
+	audioWindowOverlap = time.Millisecond * 5
 
 	noiseAmount = 1e-5
 )

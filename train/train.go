@@ -18,18 +18,19 @@ import (
 
 const (
 	FeatureCount  = 26
-	HiddenSize    = 200
-	BatchSize     = 20
-	CostBatchSize = 20
+	HiddenSize    = 128
+	OutHiddenSize = 128
+	BatchSize     = 16
+	CostBatchSize = 4
 
-	MaxSubBatch    = 10
+	MaxSubBatch    = 8
 	MaxConcurrency = 2
 
 	CrossRatio = 0.3
 
 	WeightStddev  = 0.05
-	InputDropout  = 0.9
-	HiddenDropout = 0.5
+	InputNoise    = 0.3
+	HiddenDropout = 1
 )
 
 func Train(rnnFile, sampleDir string, stepSize float64) {
@@ -72,17 +73,17 @@ func Train(rnnFile, sampleDir string, stepSize float64) {
 	}
 
 	var epoch int
-	toggleDropout(seqFunc, true)
+	toggleRegularization(seqFunc, true)
 	sgd.SGDInteractive(gradienter, training, stepSize, BatchSize, func() bool {
-		toggleDropout(seqFunc, false)
-		cost := ctc.TotalCost(seqFunc, training, CostBatchSize, 0)
-		crossCost := ctc.TotalCost(seqFunc, validation, CostBatchSize, 0)
-		toggleDropout(seqFunc, true)
+		toggleRegularization(seqFunc, false)
+		cost := ctc.TotalCost(seqFunc, training, CostBatchSize, MaxConcurrency)
+		crossCost := ctc.TotalCost(seqFunc, validation, CostBatchSize, MaxConcurrency)
+		toggleRegularization(seqFunc, true)
 		log.Printf("Epoch %d: cost=%e cross=%e", epoch, cost, crossCost)
 		epoch++
 		return true
 	})
-	toggleDropout(seqFunc, false)
+	toggleRegularization(seqFunc, false)
 
 	data, err := seqFunc.Serialize()
 	if err != nil {
@@ -130,6 +131,11 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 		},
 		&neuralnet.DenseLayer{
 			InputCount:  HiddenSize * 2,
+			OutputCount: OutHiddenSize,
+		},
+		&neuralnet.HyperbolicTangent{},
+		&neuralnet.DenseLayer{
+			InputCount:  OutHiddenSize,
 			OutputCount: len(cubewhisper.Labels) + 1,
 		},
 		&neuralnet.LogSoftmaxLayer{},
@@ -141,9 +147,9 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 			Biases: means,
 			Scales: stddevs,
 		},
-		&neuralnet.DropoutLayer{
-			KeepProbability: InputDropout,
-			Training:        false,
+		&neuralnet.GaussNoiseLayer{
+			Stddev:   InputNoise,
+			Training: false,
 		},
 	}
 	netBlock := rnn.NewNetworkBlock(inputNet, 0)
@@ -171,10 +177,10 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 	}
 }
 
-func toggleDropout(bd *rnn.Bidirectional, dropout bool) {
+func toggleRegularization(bd *rnn.Bidirectional, enabled bool) {
 	output := bd.Output.(*rnn.NetworkSeqFunc).Network[0].(*neuralnet.DropoutLayer)
-	output.Training = dropout
+	output.Training = enabled
 	inNet := bd.Forward.(*rnn.RNNSeqFunc).Block.(rnn.StackedBlock)[0].(*rnn.NetworkBlock)
-	inDropout := inNet.Network()[1].(*neuralnet.DropoutLayer)
-	inDropout.Training = dropout
+	inNoise := inNet.Network()[1].(*neuralnet.GaussNoiseLayer)
+	inNoise.Training = enabled
 }
