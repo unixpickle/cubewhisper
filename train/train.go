@@ -59,6 +59,8 @@ func Train(rnnFile, sampleDir string, stepSize float64) {
 	log.Println("Using", samples.Len()-crossLen, "training and",
 		crossLen, "validation samples...")
 
+	// Always shuffle the samples in the same way.
+	rand.Seed(123)
 	sgd.ShuffleSampleSet(samples)
 	validation := samples.Subset(0, crossLen)
 	training := samples.Subset(crossLen, samples.Len())
