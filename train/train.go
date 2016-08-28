@@ -173,8 +173,8 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 		}
 	}
 	return &rnn.Bidirectional{
-		Forward:  &rnn.RNNSeqFunc{Block: forwardBlock},
-		Backward: &rnn.RNNSeqFunc{Block: backwardBlock},
+		Forward:  &rnn.BlockSeqFunc{Block: forwardBlock},
+		Backward: &rnn.BlockSeqFunc{Block: backwardBlock},
 		Output:   &rnn.NetworkSeqFunc{Network: outputNet},
 	}
 }
@@ -182,7 +182,7 @@ func createNetwork(samples sgd.SampleSet) *rnn.Bidirectional {
 func toggleRegularization(bd *rnn.Bidirectional, enabled bool) {
 	output := bd.Output.(*rnn.NetworkSeqFunc).Network[0].(*neuralnet.DropoutLayer)
 	output.Training = enabled
-	inNet := bd.Forward.(*rnn.RNNSeqFunc).Block.(rnn.StackedBlock)[0].(*rnn.NetworkBlock)
+	inNet := bd.Forward.(*rnn.BlockSeqFunc).Block.(rnn.StackedBlock)[0].(*rnn.NetworkBlock)
 	inNoise := inNet.Network()[1].(*neuralnet.GaussNoiseLayer)
 	inNoise.Training = enabled
 }
